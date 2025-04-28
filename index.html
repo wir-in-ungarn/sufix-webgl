@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="unity-webgl-version" content="1.0">
+    <meta name="unity-webgl-size" content="1280,720">
+    <title>Sufix Hero</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <style>
+      /* Critical CSS */
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: black;
+      }
+      #unity-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        background: black;
+      }
+      #unity-canvas {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      #loading-cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: black;
+        z-index: 1000;
+      }
+    </style>
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body class="dark">
+    <div id="unity-container">
+      <canvas id="unity-canvas" width="1280" height="720"></canvas>
+    </div>
+
+    <div id="loading-cover">
+      <div id="unity-loading-bar">
+        <div id="unity-logo" class="centered-logo"><img src="TemplateData/logo.png" alt="Game Logo"/></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+        <div id="message">
+          WEGEN DER VIELEN BENÖTIGTEN AUDIO-DATEIEN KANN DAS LADEN ETWAS LÄNGER DAUERN (BIS ZU 30 SEKUNDEN).
+          DU MUSST SOMIT LEIDER EINMALIG ETWAS GEDULD MITBRINGEN.
+        </div>
+        <!-- <div id="loading-percentage">0%</div> -->
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Sufix-Final.loader.js";
+      
+      // Itch.io override
+      if (typeof window.unityWebGLLoaderUrl !== 'undefined') {
+        loaderUrl = window.unityWebGLLoaderUrl;
+        buildUrl = loaderUrl.substring(0, loaderUrl.lastIndexOf('/'));
+      }
+
+      var config = {
+        dataUrl: buildUrl + "/Sufix-Final.data",
+        frameworkUrl: buildUrl + "/Sufix-Final.framework.js",
+        codeUrl: buildUrl + "/Sufix-Final.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "151 CONCEPTS",
+        productName: "Sufix Hero",
+        productVersion: "1.0"
+      };
+
+      // Maintain aspect ratio
+      function maintainAspectRatio() {
+        const container = document.getElementById('unity-container');
+        const canvas = document.getElementById('unity-canvas');
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const targetRatio = 16 / 9;
+        
+        let width, height;
+        
+        if (windowHeight * targetRatio > windowWidth) {
+          // Window is taller than 16:9
+          width = windowWidth;
+          height = width / targetRatio;
+        } else {
+          // Window is wider than 16:9
+          height = windowHeight;
+          width = height * targetRatio;
+        }
+        
+        container.style.width = width + 'px';
+        container.style.height = height + 'px';
+        container.style.left = '50%';
+        container.style.transform = 'translateX(-50%)';
+        
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      // Initial setup
+      window.addEventListener('load', function() {
+        maintainAspectRatio();
+        
+        // Itch.io specific
+        if (typeof window.unityWebGLLoaderUrl !== 'undefined') {
+          document.dispatchEvent(new Event('unity-loaded'));
+        }
+      });
+
+      window.addEventListener('resize', maintainAspectRatio);
+      window.addEventListener('orientationchange', function() {
+        setTimeout(maintainAspectRatio, 100);
+      });
+
+      // Load Unity
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = function() {
+        createUnityInstance(document.getElementById("unity-canvas"), config, function(progress) {
+          // Progress updates if needed
+        }).then(function(unityInstance) {
+          document.getElementById("loading-cover").style.display = "none";
+          
+          // Fullscreen button if needed
+          if ("" !== "true") {
+            var fullscreenButton = document.createElement("div");
+            fullscreenButton.id = "unity-fullscreen-button";
+            document.body.appendChild(fullscreenButton);
+            fullscreenButton.onclick = function() {
+              unityInstance.SetFullscreen(1);
+            };
+          }
+        }).catch(function(message) {
+          console.error("Unity loading failed: ", message);
+        });
+      };
+      document.body.appendChild(script);
+
+      // Function to enter fullscreen
+      function RequestFullscreen() {
+        var element = document.documentElement; // Get the whole document
+        if (element.requestFullscreen) {
+          element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) { // Firefox
+          element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) { // Chrome, Safari, Opera
+          element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { // IE/Edge
+          element.msRequestFullscreen();
+        }
+      }
+
+      // Function to exit fullscreen
+      function ExitFullscreen() {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          document.msExitFullscreen();
+        }
+        }
+
+    </script>
+  </body>
+</html>
